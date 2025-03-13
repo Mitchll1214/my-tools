@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <title>日志SQL参数替换工具（优化版）</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #e0f7fa; /* 蓝绿色背景 */
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: #006064; /* 深蓝绿色 */
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .tool-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 80px; /* 避免标题与内容重叠 */
+    }
+    .textarea-row {
+      display: flex;
+      gap: 30px; /* 增加文本框之间的间隔 */
+    }
+    .textarea-container {
+      flex: 1;
+    }
+    .textarea-container textarea {
+      width: 100%;
+      height: 300px;
+      padding: 15px;
+      font-size: 14px;
+      font-family: monospace;
+      border: 1px solid #00838f; /* 蓝绿色边框 */
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      resize: none;
+    }
+    .textarea-container textarea#input {
+      background-color: #ffffff;
+    }
+    .textarea-container textarea#output {
+      background-color: #e0f2f1; /* 浅蓝绿色 */
+    }
+    .button-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .button-container button {
+      padding: 15px 30px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #00838f; /* 蓝绿色 */
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .button-container button:hover {
+      background-color: #006064; /* 深蓝绿色 */
+    }
+    .help {
+      margin-top: 30px;
+      background-color: #ffffff;
+      border: 1px solid #b2dfdb; /* 蓝绿色边框 */
+      border-radius: 4px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .help pre {
+      background: #e0f7fa; /* 蓝绿色背景 */
+      padding: 15px;
+      border-radius: 4px;
+      font-size: 14px;
+      margin: 0;
+    }
+    .error {
+      color: #ff5722; /* 橙红色，区别于蓝绿色主题 */
+      margin-top: 15px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+ </head>
+ <body>
+  <div class="container">
+    <div class="header">日志SQL参数替换工具</div>
+    <div class="tool-container">
+      <div class="textarea-row">
+        <div class="textarea-container">
+          <textarea id="input" placeholder="粘贴新的日志内容..."></textarea>
+        </div>
+        <div class="textarea-container">
+          <textarea id="output" readonly></textarea>
+        </div>
+      </div>
+      <div class="button-container">
+        <button onclick="convert()">转换</button>
+        <button onclick="copyOutput()">复制结果</button>
+        <button onclick="clearTextareas()">清空</button>
+      </div>
+    </div>
+    <div id="error" class="error"></div>
+    <div class="help">
+      <pre>
+优化说明：
+1. 支持新的复杂日志格式
+2. 增强参数解析能力（处理多行参数）
+3. 保持错误提示和参数校验
+4. 新增一键复制功能
+
+示例日志：
+Preparing: SELECT * FROM inventory WHERE  sku_no=? 
+Parameters: abc1234(String)
+
+      </pre>
+    </div>
+  </div>
+
+<script>
+function convert() {
+  const errorEl = document.getElementById('error');
+  errorEl.textContent = '';
+  
+  try {
+    const log = document.getElementById('input').value.trim();
+    if (!log) throw new Error('请输入日志内容');
+
+    // 提取SQL语句和参数
+    const [sqlLine, paramLine] = extractLogLines(log);
+    const sql = extractSQL(sqlLine);
+    const params = parseParameters(extractParamString(paramLine));
+
+    // 执行参数替换
+    document.getElementById('output').value = replacePlaceholders(sql, params);
+  } catch (e) {
+    errorEl.textContent = `错误: ${e.message}`;
+    console.error(e);
+  }
+}
+
+function extractLogLines(log) {
+  const lines = log.split('\n').map(l => l.trim()).filter(l => l);
+  const sqlLine = lines.find(l => l.includes('Preparing:'));
+  const paramLine = lines.find(l => l.includes('Parameters:'));
+
+  if (!sqlLine || !paramLine) {
+    throw new Error('未找到 Preparing 或 Parameters 行');
+  }
+  return [sqlLine, paramLine];
+}
+
+function extractSQL(line) {
+  const prepIndex = line.indexOf('Preparing:');
+  return line.slice(prepIndex + 'Preparing:'.length).trim();
+}
+
+function extractParamString(line) {
+  const paramsIndex = line.indexOf('Parameters:');
+  return line.slice(paramsIndex + 'Parameters:'.length).trim();
+}
+
+function parseParameters(paramStr) {
+  if (!paramStr) return [];
+  
+  const regex = /([^,]*?)\((\w+)\)/g;
+  const params = [];
+  let match;
+  
+  while ((match = regex.exec(paramStr)) !== null) {
+    params.push({
+      value: match[1].trim(),
+      type: match[2].toLowerCase()
+    });
+  }
+  
+  if (params.length === 0) {
+    throw new Error(`解析参数时出错：${paramStr}`);
+  }
+  
+  return params;
+}
+
+function replacePlaceholders(sql, params) {
+  const parts = sql.split('?');
+  if (parts.length - 1 !== params.length) {
+    throw new Error(`参数数量不匹配 (SQL需要${parts.length-1}个，实际${params.length}个)`);
+  }
+
+  return parts.reduce((acc, part, index) => {
+    if (index === 0) return part;
+    const param = params[index-1];
+    return acc + processParam(param) + part;
+  }, '');
+}
+
+function processParam({ value, type }) {
+  if (value.toLowerCase() === 'null') return 'NULL';
+  
+  switch(type) {
+    case 'string':
+    case 'date':
+    case 'timestamp':
+    case 'datetime':
+      return `'${escapeString(value)}'`;
+    
+    case 'boolean':
+      return value.toLowerCase() === 'true' ? '1' : '0';
+    
+    default:
+      if (isNaN(value)) throw new Error(`无效的数值参数: ${value}`);
+      return value;
+  }
+}
+
+function escapeString(value) {
+  return value.replace(/'/g, "''").replace(/\\/g, '\\\\');
+}
+
+// 一键复制功能
+function copyOutput() {
+  const outputTextarea = document.getElementById('output');
+  outputTextarea.select();
+  document.execCommand('copy');
+  alert('内容已复制到剪贴板！');
+}
+
+// 清空文本框内容
+function clearTextareas() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').value = '';
+}
+</script>
+ </body>
+</html>
