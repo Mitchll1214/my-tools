@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INSERT语句字段批量替换工具</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --input-bg: #ffffff;
+            --input-border: #dddddd;
+            --button-bg: #4CAF50;
+            --button-hover: #45a049;
+            --example-bg: #f5f5f5;
+            --copy-btn-bg: #2196F3;
+            --copy-btn-hover: #0b7dda;
+            --toast-bg: rgba(0, 0, 0, 0.7);
+        }
+        
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --input-bg: #2d2d2d;
+            --input-border: #444444;
+            --button-bg: #388E3C;
+            --button-hover: #2E7D32;
+            --example-bg: #2a2a2a;
+            --copy-btn-bg: #1976D2;
+            --copy-btn-hover: #1565C0;
+            --toast-bg: rgba(255, 255, 255, 0.9);
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+        
+        h1 {
+            color: var(--text-color);
+            text-align: center;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        
+        textarea, input {
+            padding: 10px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        button {
+            padding: 10px 15px;
+            background-color: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: var(--button-hover);
+        }
+        
+        .example {
+            background-color: var(--example-bg);
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        
+        .theme-switcher {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+        
+        .theme-btn {
+            background-color: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            right: 10px;
+            top: 35px;
+            background-color: var(--copy-btn-bg);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .copy-btn:hover {
+            background-color: var(--copy-btn-hover);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--toast-bg);
+            color: var(--bg-color);
+            padding: 10px 20px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        
+        .dark-mode .toast {
+            color: var(--text-color);
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-switcher">
+        <button class="theme-btn" id="themeBtn">🌓</button>
+    </div>
+    
+    <div class="toast" id="toast">复制成功！</div>
+    
+    <h1>INSERT语句字段批量替换工具</h1>
+    
+    <div class="container">
+        <div class="input-group">
+            <label for="sqlInput">输入INSERT语句:</label>
+            <textarea id="sqlInput" placeholder="粘贴您的INSERT语句在这里..."></textarea>
+        </div>
+        
+        <div class="input-group">
+            <label for="fieldInput">要替换的字段名:</label>
+            <input type="text" id="fieldInput" placeholder="例如: inside_barcode_id">
+        </div>
+        
+        <div class="input-group">
+            <label for="valuesInput">替换值列表 (每行一个值):</label>
+            <textarea id="valuesInput" placeholder="每行输入一个替换值..."></textarea>
+        </div>
+        
+        <button id="processBtn">处理</button>
+        
+        <div class="input-group">
+            <label for="output">处理结果:</label>
+            <button class="copy-btn" id="copyBtn">复制结果</button>
+            <textarea id="output" readonly></textarea>
+        </div>
+    </div>
+    
+    <div class="example">
+        <h3>使用示例:</h3>
+        <p><strong>输入INSERT语句:</strong></p>
+        <pre>INSERT INTO `tbl_commodity_corp_match_product` (`id`,`inside_barcode_id`) VALUES('76d08e68e7e4762d72e98b7a8b9d7d0a',null);
+INSERT INTO `tbl_commodity_corp_match_product` (`id`,`inside_barcode_id`) VALUES('123456','20160623008161');</pre>
+        
+        <p><strong>要替换的字段名:</strong> inside_barcode_id</p>
+        
+        <p><strong>替换值列表:</strong></p>
+        <pre>123123
+456456</pre>
+        
+        <p><strong>输出结果:</strong></p>
+        <pre>INSERT INTO `tbl_commodity_corp_match_product` (`id`,`inside_barcode_id`) VALUES('76d08e68e7e4762d72e98b7a8b9d7d0a','123123');
+INSERT INTO `tbl_commodity_corp_match_product` (`id`,`inside_barcode_id`) VALUES('123456','456456');</pre>
+    </div>
+    
+    <script>
+        // 主题切换功能
+        document.getElementById('themeBtn').addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+        });
+        
+        // 初始化主题
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+        
+        // 复制功能
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const output = document.getElementById('output');
+            output.select();
+            document.execCommand('copy');
+            
+            // 显示提示
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            
+            // 3秒后隐藏提示
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        });
+        
+        document.getElementById('processBtn').addEventListener('click', function() {
+            const sqlInput = document.getElementById('sqlInput').value.trim();
+            const fieldName = document.getElementById('fieldInput').value.trim();
+            const valuesInput = document.getElementById('valuesInput').value.trim();
+            
+            if (!sqlInput || !fieldName || !valuesInput) {
+                alert('请填写所有输入框！');
+                return;
+            }
+            
+            try {
+                const sqlLines = sqlInput.split('\n').filter(line => line.trim());
+                const values = valuesInput.split('\n').filter(v => v.trim());
+                
+                if (values.length === 0) {
+                    alert('请至少提供一个替换值！');
+                    return;
+                }
+                
+                let output = '';
+                let valueIndex = 0;
+                
+                for (const line of sqlLines) {
+                    if (!line.toUpperCase().startsWith('INSERT INTO')) {
+                        output += line + '\n';
+                        continue;
+                    }
+                    
+                    // 使用更精确的正则表达式解析INSERT语句
+                    const regex = /INSERT INTO\s+`?([^`\s]+)`?\s*\(([^)]+)\)\s*VALUES\s*(.*)/i;
+                    const match = line.match(regex);
+                    
+                    if (!match) {
+                        output += line + '\n';
+                        continue;
+                    }
+                    
+                    const tableName = match[1];
+                    const columns = match[2].split(',').map(col => col.trim().replace(/`/g, ''));
+                    const fieldIndex = columns.indexOf(fieldName);
+                    const valuesClause = match[3];
+                    
+                    if (fieldIndex === -1) {
+                        output += line + '\n';
+                        continue;
+                    }
+                    
+                    // 解析VALUES子句
+                    const parsedValues = parseValuesClause(valuesClause)
+                        .map(group => {
+                            if (fieldIndex >= 0 && fieldIndex < group.length) {
+                                const newValue = values[valueIndex % values.length];
+                                group[fieldIndex] = newValue === 'NULL' || newValue === 'null' ? null : newValue;
+                                valueIndex++;
+                            }
+                            return group;
+                        });
+                    
+                    // 重新构建VALUES部分
+                    const newValues = parsedValues.map(group => 
+                        `(${group.map(v => 
+                            v === null ? 'NULL' : `'${v.toString().replace(/'/g, "''")}'`
+                        ).join(',')})`
+                    ).join(',');
+                    
+                    // 构建完整的INSERT语句
+                    output += `INSERT INTO \`${tableName}\` (${columns.map(col => `\`${col}\``).join(',')}) VALUES ${newValues};\n`;
+                }
+                
+                document.getElementById('output').value = output.trim();
+            } catch (e) {
+                alert('处理出错: ' + e.message);
+                console.error(e);
+            }
+        });
+
+        // 解析VALUES子句的专用函数
+        function parseValuesClause(valuesClause) {
+            const groups = [];
+            let currentGroup = '';
+            let inQuotes = false;
+            let quoteChar = null;
+            let depth = 0;
+            
+            // 首先分割出每个值组
+            for (let i = 0; i < valuesClause.length; i++) {
+                const char = valuesClause[i];
+                
+                // 处理引号
+                if ((char === '\'' || char === '"') && !inQuotes) {
+                    inQuotes = true;
+                    quoteChar = char;
+                } else if (char === quoteChar && inQuotes) {
+                    // 检查是否是转义的引号
+                    if (i > 0 && valuesClause[i-1] === '\\') {
+                        // 忽略转义的引号
+                    } else {
+                        inQuotes = false;
+                    }
+                }
+                
+                // 处理括号
+                if (char === '(' && !inQuotes) {
+                    if (depth === 0) {
+                        currentGroup = '';
+                    }
+                    depth++;
+                } else if (char === ')' && !inQuotes) {
+                    depth--;
+                    if (depth === 0) {
+                        groups.push(currentGroup);
+                        currentGroup = '';
+                        continue;
+                    }
+                }
+                
+                if (depth > 0) {
+                    currentGroup += char;
+                }
+            }
+            
+            // 然后处理每个值组中的各个值
+            return groups.map(group => {
+                const values = [];
+                let currentValue = '';
+                let inValueQuotes = false;
+                let valueQuoteChar = null;
+                
+                for (let i = 0; i < group.length; i++) {
+                    const char = group[i];
+                    
+                    if ((char === '\'' || char === '"') && !inValueQuotes) {
+                        inValueQuotes = true;
+                        valueQuoteChar = char;
+                        currentValue = '';
+                    } else if (char === valueQuoteChar && inValueQuotes) {
+                        // 检查是否是转义的引号
+                        if (i > 0 && group[i-1] === '\\') {
+                            currentValue += char;
+                        } else {
+                            inValueQuotes = false;
+                            values.push(currentValue);
+                            currentValue = '';
+                        }
+                    } else if (char === ',' && !inValueQuotes) {
+                        if (currentValue.trim()) {
+                            values.push(currentValue.trim());
+                        }
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                
+                if (currentValue.trim()) {
+                    values.push(currentValue.trim());
+                }
+                
+                // 处理NULL值和去除引号
+                return values.map(v => {
+                    const trimmed = v.trim();
+                    if (trimmed.toUpperCase() === 'NULL') return null;
+                    // 去除值两边的引号
+                    if ((trimmed.startsWith("'") && trimmed.endsWith("'")) || 
+                        (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+                        return trimmed.substring(1, trimmed.length - 1);
+                    }
+                    return trimmed;
+                });
+            });
+        }
+    </script>
+</body>
+</html>
