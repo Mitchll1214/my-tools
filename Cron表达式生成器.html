@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线Cron表达式生成器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --container-bg: #ffffff;
+            --border-color: #dee2e6;
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --table-bg: transparent;
+            --table-border: #dee2e6;
+            --input-bg: #ffffff;
+            --input-text: #212529;
+            --input-border: #ced4da;
+            --preview-bg: #f8f9fa;
+            --preview-text: #0d6efd;
+            --help-bg: #f8f9fa;
+            --help-text: #6c757d;
+        }
+
+        .dark-mode {
+            --bg-color: #212529;
+            --text-color: #f8f9fa;
+            --container-bg: #2c3034;
+            --border-color: #495057;
+            --primary-color: #3d8bfd;
+            --secondary-color: #adb5bd;
+            --table-bg: #343a40;
+            --table-border: #495057;
+            --input-bg: #343a40;
+            --input-text: #f8f9fa;
+            --input-border: #495057;
+            --preview-bg: #343a40;
+            --preview-text: #3d8bfd;
+            --help-bg: #343a40;
+            --help-text: #adb5bd;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 900px;
+            background-color: var(--container-bg);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .tab-content {
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-color);
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: var(--container-bg);
+            border-color: var(--border-color) var(--border-color) var(--container-bg);
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control {
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            border-color: var(--input-border);
+        }
+
+        .form-control:focus {
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .cron-preview {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--preview-text);
+            padding: 10px;
+            background-color: var(--preview-bg);
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .example-list {
+            margin-top: 20px;
+        }
+
+        .example-item {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .example-item:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+
+        .help-text {
+            font-size: 0.9em;
+            color: var(--help-text);
+            background-color: var(--help-bg);
+            padding: 15px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .table {
+            color: var(--text-color);
+            background-color: var(--table-bg);
+        }
+
+        .table-bordered {
+            border-color: var(--table-border);
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border-color: var(--table-border);
+        }
+
+        .alert-info {
+            background-color: rgba(13, 110, 253, 0.1);
+            border-color: rgba(13, 110, 253, 0.2);
+            color: var(--text-color);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            color: var(--primary-color);
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .theme-toggle {
+                position: static;
+                display: inline-block;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>在线Cron表达式生成器</h1>
+            <p class="text-muted">可视化生成和解析Quartz Cron表达式</p>
+            <button id="themeToggle" class="theme-toggle" title="切换黑白模式">
+                <i class="fas fa-moon"></i> 切换模式
+            </button>
+        </div>
+
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="generate-tab" data-bs-toggle="tab" data-bs-target="#generate" type="button" role="tab">生成Cron表达式</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="parse-tab" data-bs-toggle="tab" data-bs-target="#parse" type="button" role="tab">解析Cron表达式</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            <!-- 生成Cron表达式 -->
+            <div class="tab-pane fade show active" id="generate" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>秒（Seconds）</label>
+                            <select class="form-control" id="seconds">
+                                <option value="*">每秒钟</option>
+                                <option value="0" selected>0秒</option>
+                                <option value="5">5秒</option>
+                                <option value="10">10秒</option>
+                                <option value="15">15秒</option>
+                                <option value="20">20秒</option>
+                                <option value="25">25秒</option>
+                                <option value="30">30秒</option>
+                                <option value="35">35秒</option>
+                                <option value="40">40秒</option>
+                                <option value="45">45秒</option>
+                                <option value="50">50秒</option>
+                                <option value="55">55秒</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <div id="seconds-custom" class="custom-input mt-2" style="display: none;">
+                                <input type="text" class="form-control" placeholder="例如: 0,15,30,45 或 */10">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>分钟（Minutes）</label>
+                            <select class="form-control" id="minutes">
+                                <option value="*">每分钟</option>
+                                <option value="0" selected>0分</option>
+                                <option value="5">5分</option>
+                                <option value="10">10分</option>
+                                <option value="15">15分</option>
+                                <option value="20">20分</option>
+                                <option value="25">25分</option>
+                                <option value="30">30分</option>
+                                <option value="35">35分</option>
+                                <option value="40">40分</option>
+                                <option value="45">45分</option>
+                                <option value="50">50分</option>
+                                <option value="55">55分</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <div id="minutes-custom" class="custom-input mt-2" style="display: none;">
+                                <input type="text" class="form-control" placeholder="例如: 0,15,30,45 或 */10">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>小时（Hours）</label>
+                            <select class="form-control" id="hours">
+                                <option value="*">每小时</option>
+                                <option value="0">0点(午夜)</option>
+                                <option value="1">1点</option>
+                                <option value="2">2点</option>
+                                <option value="3">3点</option>
+                                <option value="4">4点</option>
+                                <option value="5">5点</option>
+                                <option value="6">6点</option>
+                                <option value="7">7点</option>
+                                <option value="8" selected>8点</option>
+                                <option value="9">9点</option>
+                                <option value="10">10点</option>
+                                <option value="11">11点</option>
+                                <option value="12">12点(中午)</option>
+                                <option value="13">13点</option>
+                                <option value="14">14点</option>
+                                <option value="15">15点</option>
+                                <option value="16">16点</option>
+                                <option value="17">17点</option>
+                                <option value="18">18点</option>
+                                <option value="19">19点</option>
+                                <option value="20">20点</option>
+                                <option value="21">21点</option>
+                                <option value="22">22点</option>
+                                <option value="23">23点</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <div id="hours-custom" class="custom-input mt-2" style="display: none;">
+                                <input type="text" class="form-control" placeholder="例如: 8-17 或 0,12,18">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>日期（Day of month）</label>
+                            <select class="form-control" id="dayOfMonth">
+                                <option value="*">每天</option>
+                                <option value="1">1日</option>
+                                <option value="2">2日</option>
+                                <option value="3">3日</option>
+                                <option value="4">4日</option>
+                                <option value="5">5日</option>
+                                <option value="6">6日</option>
+                                <option value="7">7日</option>
+                                <option value="8">8日</option>
+                                <option value="9">9日</option>
+                                <option value="10">10日</option>
+                                <option value="15">15日</option>
+                                <option value="20">20日</option>
+                                <option value="25">25日</option>
+                                <option value="L">最后一天</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <div id="dayOfMonth-custom" class="custom-input mt-2" style="display: none;">
+                                <input type="text" class="form-control" placeholder="例如: 1,15 或 1-5">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>月份（Month）</label>
+                            <select class="form-control" id="month">
+                                <option value="*">每月</option>
+                                <option value="1">一月</option>
+                                <option value="2">二月</option>
+                                <option value="3">三月</option>
+                                <option value="4">四月</option>
+                                <option value="5">五月</option>
+                                <option value="6">六月</option>
+                                <option value="7">七月</option>
+                                <option value="8">八月</option>
+                                <option value="9">九月</option>
+                                <option value="10">十月</option>
+                                <option value="11">十一月</option>
+                                <option value="12">十二月</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <div id="month-custom" class="custom-input mt-2" style="display: none;">
+                                <input type="text" class="form-control" placeholder="例如: 1-6 或 1,4,7,10">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>星期（Day of week）</label>
+                            <select class="form-control" id="dayOfWeek">
+                                <option value="*">每周</option>
+                                <option value="1">周一</option>
+                                <option value="2">周二</option>
+                                <option value="3">周三</option>
+                                <option value="4">周四</option>
+                                <option value="5">周五</option>
+                                <option value="6">周六</option>
+                                <option value="7">周日</option>
+                                <option value="1-5">工作日(周一到周五)</option>
+                                <option value="6,7">周末(周六和周日)</option>
+                                <option value="custom">自定义...</option>
+                            </select>
+                            <div id="dayOfWeek-custom" class="custom-input mt-2" style="display: none;">
+                                <input type="text" class="form-control" placeholder="例如: 1,3,5 或 1-5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cron-preview">
+                    <div id="cronExpression">0 0 8 * * ?</div>
+                    <div>
+                        <span id="cronDescription">每天8:00:00执行</span>
+                        <i class="fas fa-copy copy-btn ms-2" onclick="copyToClipboard('cronExpression')"></i>
+                    </div>
+                </div>
+
+                <div class="example-list">
+                    <h5>常用示例:</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="example-item" onclick="setExample('0 0/5 * * * ?', '每5分钟执行一次')">
+                                <strong>0 0/5 * * * ?</strong> - 每5分钟
+                            </div>
+                            <div class="example-item" onclick="setExample('0 0 12 * * ?', '每天中午12点执行')">
+                                <strong>0 0 12 * * ?</strong> - 每天中午
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="example-item" onclick="setExample('0 15 10 ? * MON-FRI', '工作日每天10:15执行')">
+                                <strong>0 15 10 ? * MON-FRI</strong> - 工作日10:15
+                            </div>
+                            <div class="example-item" onclick="setExample('0 0 2 1 * ?', '每月1日凌晨2点执行')">
+                                <strong>0 0 2 1 * ?</strong> - 每月1日2点
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="example-item" onclick="setExample('0 0 10,14,16 * * ?', '每天10点、14点、16点执行')">
+                                <strong>0 0 10,14,16 * * ?</strong> - 每天3次
+                            </div>
+                            <div class="example-item" onclick="setExample('0 0/30 8-17 ? * MON-FRI', '工作日每半小时执行(8:00-17:00)')">
+                                <strong>0 0/30 8-17 ? * MON-FRI</strong> - 工作时段
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 解析Cron表达式 -->
+            <div class="tab-pane fade" id="parse" role="tabpanel">
+                <div class="form-group">
+                    <label>输入Cron表达式:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="inputCron" placeholder="例如: 0 0 12 * * ?">
+                        <button class="btn btn-primary" type="button" onclick="parseCron()">解析</button>
+                    </div>
+                </div>
+
+                <div id="parseResult" style="display: none;">
+                    <h5>解析结果:</h5>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>字段</th>
+                                <th>值</th>
+                                <th>描述</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>秒（Seconds）</td>
+                                <td id="parsedSeconds">-</td>
+                                <td id="parsedSecondsDesc">-</td>
+                            </tr>
+                            <tr>
+                                <td>分钟（Minutes）</td>
+                                <td id="parsedMinutes">-</td>
+                                <td id="parsedMinutesDesc">-</td>
+                            </tr>
+                            <tr>
+                                <td>小时（Hours）</td>
+                                <td id="parsedHours">-</td>
+                                <td id="parsedHoursDesc">-</td>
+                            </tr>
+                            <tr>
+                                <td>日期（Day of month）</td>
+                                <td id="parsedDayOfMonth">-</td>
+                                <td id="parsedDayOfMonthDesc">-</td>
+                            </tr>
+                            <tr>
+                                <td>月份（Month）</td>
+                                <td id="parsedMonth">-</td>
+                                <td id="parsedMonthDesc">-</td>
+                            </tr>
+                            <tr>
+                                <td>星期（Day of week）</td>
+                                <td id="parsedDayOfWeek">-</td>
+                                <td id="parsedDayOfWeekDesc">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="alert alert-info">
+                        <strong>完整描述:</strong> <span id="fullDescription"></span>
+                    </div>
+                </div>
+
+                <div class="help-text mt-3">
+                    <h5>Cron表达式格式说明:</h5>
+                    <p>Cron表达式由6或7个字段组成，分别表示：</p>
+                    <ol>
+                        <li><strong>秒（Seconds）</strong> - 0到59</li>
+                        <li><strong>分钟（Minutes）</strong> - 0到59</li>
+                        <li><strong>小时（Hours）</strong> - 0到23</li>
+                        <li><strong>日期（Day of month）</strong> - 1到31</li>
+                        <li><strong>月份（Month）</strong> - 1到12或JAN-DEC</li>
+                        <li><strong>星期（Day of week）</strong> - 1到7或SUN-SAT (1=周日,7=周六)</li>
+                        <li><strong>年（Year）</strong> - 可选字段</li>
+                    </ol>
+                    <p><strong>特殊字符:</strong></p>
+                    <ul>
+                        <li><strong>*</strong> - 所有可能的值</li>
+                        <li><strong>?</strong> - 不指定值(用于日期或星期)</li>
+                        <li><strong>-</strong> - 范围(如1-5)</li>
+                        <li><strong>,</strong> - 多个值(如1,3,5)</li>
+                        <li><strong>/</strong> - 间隔(如0/15表示从0开始每15个单位)</li>
+                        <li><strong>L</strong> - 最后一天(仅日期)或最后一周几(如6L表示最后一个周五)</li>
+                        <li><strong>W</strong> - 最近工作日(如15W表示15日最近的工作日)</li>
+                        <li><strong>#</strong> - 第几个周几(如6#3表示第三个周五)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查本地存储中的主题偏好
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+                const icon = document.querySelector('#themeToggle i');
+                if (icon) {
+                    icon.classList.replace('fa-moon', 'fa-sun');
+                }
+            }
+
+            // 为所有下拉菜单添加事件监听
+            document.querySelectorAll('select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const customDivId = this.id + '-custom';
+                    if (this.value === 'custom') {
+                        document.getElementById(customDivId).style.display = 'block';
+                    } else {
+                        document.getElementById(customDivId).style.display = 'none';
+                    }
+                    updateCronExpression();
+                });
+            });
+
+            // 为所有自定义输入框添加事件监听
+            document.querySelectorAll('.custom-input input').forEach(input => {
+                input.addEventListener('input', function() {
+                    updateCronExpression();
+                });
+            });
+
+            // 确保主题切换按钮存在
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+        });
+
+        // 主题切换功能
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            
+            const icon = this.querySelector('i');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                icon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        }
+
+        // 更新Cron表达式
+        function updateCronExpression() {
+            const seconds = getFieldValue('seconds');
+            const minutes = getFieldValue('minutes');
+            const hours = getFieldValue('hours');
+            const dayOfMonth = getFieldValue('dayOfMonth');
+            const month = getFieldValue('month');
+            const dayOfWeek = getFieldValue('dayOfWeek');
+            
+            // Quartz Cron格式: 秒 分 时 日 月 周
+            const cronExp = `${seconds} ${minutes} ${hours} ${dayOfMonth} ${month} ${dayOfWeek}`;
+            
+            document.getElementById('cronExpression').textContent = cronExp;
+            document.getElementById('cronDescription').textContent = getCronDescription(cronExp);
+        }
+
+        // 获取字段值
+        function getFieldValue(fieldId) {
+            const select = document.getElementById(fieldId);
+            if (select.value === 'custom') {
+                const customInput = document.getElementById(fieldId + '-custom').querySelector('input');
+                return customInput.value || '*';
+            }
+            return select.value;
+        }
+
+        // 设置示例
+        function setExample(cronExp, description) {
+            document.getElementById('cronExpression').textContent = cronExp;
+            document.getElementById('cronDescription').textContent = description;
+            
+            // 切换到生成标签页
+            document.getElementById('generate-tab').click();
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalClass = copyBtn.className;
+                copyBtn.className = 'fas fa-check copy-btn ms-2';
+                setTimeout(() => {
+                    copyBtn.className = originalClass;
+                }, 2000);
+            });
+        }
+
+        // 解析Cron表达式
+        function parseCron() {
+            const cronExp = document.getElementById('inputCron').value.trim();
+            if (!cronExp) {
+                alert('请输入Cron表达式');
+                return;
+            }
+
+            const parts = cronExp.split(/\s+/);
+            if (parts.length < 6) {
+                alert('无效的Cron表达式，至少需要6个字段');
+                return;
+            }
+
+            // 填充解析结果
+            document.getElementById('parsedSeconds').textContent = parts[0];
+            document.getElementById('parsedSecondsDesc').textContent = describeField(parts[0], '秒', 0, 59);
+            
+            document.getElementById('parsedMinutes').textContent = parts[1];
+            document.getElementById('parsedMinutesDesc').textContent = describeField(parts[1], '分钟', 0, 59);
+            
+            document.getElementById('parsedHours').textContent = parts[2];
+            document.getElementById('parsedHoursDesc').textContent = describeField(parts[2], '小时', 0, 23);
+            
+            document.getElementById('parsedDayOfMonth').textContent = parts[3];
+            document.getElementById('parsedDayOfMonthDesc').textContent = describeField(parts[3], '日期', 1, 31);
+            
+            document.getElementById('parsedMonth').textContent = parts[4];
+            document.getElementById('parsedMonthDesc').textContent = describeMonth(parts[4]);
+            
+            document.getElementById('parsedDayOfWeek').textContent = parts[5];
+            document.getElementById('parsedDayOfWeekDesc').textContent = describeDayOfWeek(parts[5]);
+            
+            document.getElementById('fullDescription').textContent = getCronDescription(cronExp);
+            document.getElementById('parseResult').style.display = 'block';
+        }
+
+        // 描述字段
+        function describeField(value, fieldName, min, max) {
+            if (value === '*') return `每${fieldName}`;
+            if (value === '?') return `不指定${fieldName}`;
+            
+            // 处理范围
+            if (value.includes('-')) {
+                const [start, end] = value.split('-');
+                return `从${start}${fieldName}到${end}${fieldName}`;
+            }
+            
+            // 处理列表
+            if (value.includes(',')) {
+                return `在${value.split(',').join('、')}${fieldName}`;
+            }
+            
+            // 处理步长
+            if (value.includes('/')) {
+                const [start, interval] = value.split('/');
+                const startText = start === '*' ? '' : `从${start}${fieldName}开始`;
+                return `${startText}每${interval}${fieldName}`;
+            }
+            
+            // 处理L
+            if (value === 'L') return `最后${fieldName}`;
+            
+            // 简单值
+            return `在${value}${fieldName}`;
+        }
+
+        // 描述月份
+        function describeMonth(value) {
+            if (value === '*') return '每月';
+            if (value === '?') return '不指定月份';
+            
+            const monthNames = ['', '一月', '二月', '三月', '四月', '五月', '六月', 
+                               '七月', '八月', '九月', '十月', '十一月', '十二月'];
+            
+            if (value.includes('-')) {
+                const [start, end] = value.split('-');
+                return `从${monthNames[parseInt(start)]}到${monthNames[parseInt(end)]}`;
+            }
+            
+            if (value.includes(',')) {
+                const months = value.split(',').map(m => monthNames[parseInt(m)]);
+                return `在${months.join('、')}`;
+            }
+            
+            if (value.includes('/')) {
+                const [start, interval] = value.split('/');
+                const startText = start === '*' ? '' : `从${monthNames[parseInt(start)]}开始`;
+                return `${startText}每${interval}个月`;
+            }
+            
+            return `在${monthNames[parseInt(value)]}`;
+        }
+
+        // 描述星期
+        function describeDayOfWeek(value) {
+            if (value === '*') return '每周';
+            if (value === '?') return '不指定星期';
+            
+            const dayNames = ['', '周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            
+            if (value.includes('-')) {
+                const [start, end] = value.split('-');
+                return `从${dayNames[parseInt(start)]}到${dayNames[parseInt(end)]}`;
+            }
+            
+            if (value.includes(',')) {
+                const days = value.split(',').map(d => dayNames[parseInt(d)]);
+                return `在${days.join('、')}`;
+            }
+            
+            if (value.includes('/')) {
+                const [start, interval] = value.split('/');
+                const startText = start === '*' ? '' : `从${dayNames[parseInt(start)]}开始`;
+                return `${startText}每${interval}周`;
+            }
+            
+            if (value.endsWith('L')) {
+                const day = parseInt(value.replace('L', ''));
+                return `最后一个${dayNames[day]}`;
+            }
+            
+            if (value.includes('#')) {
+                const [day, weekNum] = value.split('#');
+                return `第${weekNum}个${dayNames[parseInt(day)]}`;
+            }
+            
+            return `在${dayNames[parseInt(value)]}`;
+        }
+
+        // 获取Cron表达式的完整描述
+        function getCronDescription(cronExp) {
+            const parts = cronExp.split(/\s+/);
+            if (parts.length < 6) return '无效的Cron表达式';
+            
+            const secondsDesc = describeField(parts[0], '秒', 0, 59);
+            const minutesDesc = describeField(parts[1], '分', 0, 59);
+            const hoursDesc = describeField(parts[2], '点', 0, 23);
+            const dayOfMonthDesc = describeField(parts[3], '日', 1, 31);
+            const monthDesc = describeMonth(parts[4]);
+            const dayOfWeekDesc = describeDayOfWeek(parts[5]);
+            
+            // 构建描述
+            let description = '';
+            
+            // 处理秒
+            if (parts[0] !== '0') {
+                description += secondsDesc + '，';
+            }
+            
+            // 处理分钟
+            if (parts[1] !== '0') {
+                description += minutesDesc + '，';
+            }
+            
+            // 处理小时
+            if (parts[2] !== '*') {
+                description += hoursDesc + '，';
+            }
+            
+            // 处理日期和星期的冲突
+            if (parts[3] !== '*' && parts[3] !== '?' && parts[5] !== '*' && parts[5] !== '?') {
+                description += `${dayOfMonthDesc}且${dayOfWeekDesc}，`;
+            } else if (parts[3] !== '*' && parts[3] !== '?') {
+                description += dayOfMonthDesc + '，';
+            } else if (parts[5] !== '*' && parts[5] !== '?') {
+                description += dayOfWeekDesc + '，';
+            }
+            
+            // 处理月份
+            if (parts[4] !== '*') {
+                description += monthDesc + '，';
+            }
+            
+            // 移除最后的逗号
+            if (description.endsWith('，')) {
+                description = description.slice(0, -1);
+            }
+            
+            // 如果没有特殊描述，使用默认
+            if (!description) {
+                return '每分钟执行';
+            }
+            
+            return description + '执行';
+        }
+    </script>
+</body>
+</html>
