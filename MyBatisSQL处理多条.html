@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日志SQL参数化（批量）</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --primary-color: #4285f4;
+            --secondary-color: #f1f1f1;
+            --textarea-bg: #fff;
+            --textarea-border: #ddd;
+            --button-bg: #4285f4;
+            --button-text: #fff;
+            --button-hover: #3367d6;
+        }
+
+        .dark-mode {
+            --bg-color: #222;
+            --text-color: #f1f1f1;
+            --primary-color: #5a9cff;
+            --secondary-color: #333;
+            --textarea-bg: #333;
+            --textarea-border: #555;
+            --button-bg: #5a9cff;
+            --button-text: #fff;
+            --button-hover: #4285f4;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .textarea-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--textarea-border);
+            border-radius: 4px;
+            background-color: var(--textarea-bg);
+            color: var(--text-color);
+            resize: vertical;
+            font-family: monospace;
+            min-height: 150px;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary-color);
+            color: var(--button-text);
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--button-hover);
+        }
+
+        button {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+        }
+
+        .theme-toggle {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            border: 1px solid var(--textarea-border);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>日志SQL参数化（批量）</h1>
+            <button id="themeToggle" class="theme-toggle">
+                <i class="fas fa-moon"></i> 切换主题
+            </button>
+        </div>
+
+        <div class="controls">
+            <button onclick="testOnClick()">
+                <i class="fas fa-filter"></i> 确认筛选
+            </button>
+            <button onclick="clearAll()">
+                <i class="fas fa-trash"></i> 清空内容
+            </button>
+        </div>
+
+        <div class="textarea-container">
+            <label for="logParameter">日志内容：</label>
+            <textarea id="logParameter" rows="15" placeholder="请粘贴日志内容..."></textarea>
+        </div>
+
+        <div class="textarea-container">
+            <label for="id_sql">转换后的SQL：</label>
+            <textarea id="id_sql" rows="25" readonly></textarea>
+            <button class="copy-btn" onclick="copyToClipboard()">
+                <i class="fas fa-copy"></i> 复制
+            </button>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var sqlflag = "Preparing:";
+        var parmasflag = "Parameters:";
+        var totalflag = "Total:";
+        var types = ['String', 'Integer'];
+
+        // 主题切换功能
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            const icon = this.querySelector('i');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.replace('fa-moon', 'fa-sun');
+                this.innerHTML = '<i class="fas fa-sun"></i> 切换主题';
+            } else {
+                icon.classList.replace('fa-sun', 'fa-moon');
+                this.innerHTML = '<i class="fas fa-moon"></i> 切换主题';
+            }
+        });
+
+        // 复制到剪贴板功能
+        function copyToClipboard() {
+            const sqlTextarea = document.getElementById("id_sql");
+            sqlTextarea.select();
+            document.execCommand("copy");
+            
+            // 显示复制成功的反馈
+            const copyBtn = document.querySelector('.copy-btn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        // 清空所有内容
+        function clearAll() {
+            document.getElementById("logParameter").value = "";
+            document.getElementById("id_sql").value = "";
+        }
+
+        function onsendLog() {
+            var logParameter = document.getElementById("logParameter").value;
+            var id_sql = document.getElementById("id_sql").innerHTML;
+            $.ajax({
+                url: "/logController/insertSqlLog",
+                type: "post",
+                dataType: 'json',
+                contentType: "application/json",
+                data: '{"type":"Log4J","log_sql":"' + escape(logParameter) + '","sql_text":"' + escape(id_sql) + '"}',
+                success: function (result) {
+                }
+            });
+        }
+
+        function testOnClick() {
+            var LengSql = 1;
+            var logParameter = document.getElementById("logParameter").value;
+            document.getElementById("id_sql").value = "";
+            var sqlOne = logParameter.split(/\n/);
+
+            for (var i = 0; i < sqlOne.length; i++) {
+                if (sqlOne[i].indexOf(sqlflag) != -1) {
+                    if (sqlOne[i + 1].indexOf(sqlflag) != -1) {
+                        // 当两个一模一样的参数放在一起的不符合规范
+                        continue;
+                    }
+                    var shuchusql = "";
+                    var canshux = "";
+                    var totalcout = "";
+                    var sqlOne_sql = sqlOne[i].split(sqlflag);
+                    // sql
+                    var sql = sqlOne_sql[1].trim();
+                    // 参数
+                    var canshu = sqlOne[i + 1].split(parmasflag);
+
+                    // 返回数据条数
+                    var total = [];
+                    if (sqlOne[i + 2] != undefined) {
+                        total = sqlOne[i + 2].split(totalflag) == undefined ? 0 : sqlOne[i + 2].split(totalflag);
+                    } else {
+                        total = ["0", "0"];
+                    }
+
+                    totalcout = "--  返回结果：total=" + total[1] + "\n";
+
+                    var cass = canshu[1] == undefined ? "" : canshu[1].trim();
+
+                    canshux = "--  参数:" + cass + "\n";
+                    var canshulist = cass == "" ? "" : cass.split(",");
+                    var sqllist = sql.split("?");
+
+                    console.log("=======" + sqllist.length);
+
+                    if (canshulist.length === (sqllist.length - 1)) {
+                        for (var sl = 0; sl < sqllist.length; sl++) {
+                            var sqq1 = sqllist[sl];
+                            var css1 = canshulist[sl];
+                            if (sqq1 === " ") {
+                                sqq1 = "";
+                            }
+                            if (css1 == undefined) {
+                                css1 = "";
+                            } else {
+                                var type = dataType(css1)
+                                css1 = css1.split("(")[0].trim();
+                                if (type === "String") {
+                                    css1 = "'" + css1 + "'";
+                                }
+                            }
+                            shuchusql = shuchusql + sqq1 + css1;
+                        }
+                        shuchusql = shuchusql + ";" + "" + "\n";
+                    } else {
+                        shuchusql = "【参数有问题】 sql：" + sql + " \n 参数：" + canshu[1] + ";============" + sqllist.length + "====ca=" + canshulist.length;
+                    }
+
+                    var henggang = "--  =========================tanli-=====华丽的分割线===============================================" + "\n";
+                    var psql = "-- 【 SQL 编号:" + LengSql + "】\n" + shuchusql + canshux + totalcout + henggang;
+                    document.getElementById("id_sql").value += psql;
+                    LengSql++;
+                }
+            }
+        }
+
+        function dataType(sss) {
+            for (var i = 0; i < types.length; i++) {
+                if (sss.indexOf(types[i]) != -1) {
+                    return types[i];
+                }
+            }
+            return "String";
+        }
+
+        // 去重
+        function dedupe(array) {
+            return Array.from(new Set(array));
+        }
+    </script>
+</body>
+</html>
