@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 深度对比工具</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --container-bg: #ffffff;
+            --border-color: #dee2e6;
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --error-color: #f44336;
+            --input-bg: #ffffff;
+            --input-text: #212529;
+            --input-border: #ced4da;
+            --button-hover: #45a049;
+            --copy-button-hover: #0b7dda;
+            --diff-added: #e6ffed;
+            --diff-removed: #ffebe9;
+            --diff-changed: #fff8c5;
+        }
+
+        .dark-mode {
+            --bg-color: #212529;
+            --text-color: #f8f9fa;
+            --container-bg: #2c3034;
+            --border-color: #495057;
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --error-color: #f44336;
+            --input-bg: #343a40;
+            --input-text: #f8f9fa;
+            --input-border: #495057;
+            --button-hover: #3e8e41;
+            --copy-button-hover: #0a6ebd;
+            --diff-added: #1a4a2a;
+            --diff-removed: #5a1a1a;
+            --diff-changed: #5a4a1a;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 30px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .json-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .json-box {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .json-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        label {
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            resize: vertical;
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+
+        .error {
+            color: var(--error-color);
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+        }
+
+        .compare-btn {
+            background-color: var(--secondary-color);
+        }
+
+        .compare-btn:hover {
+            background-color: var(--copy-button-hover);
+        }
+
+        .clear-btn {
+            background-color: #f44336;
+        }
+
+        .clear-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--button-hover);
+        }
+
+        .diff-result {
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 15px;
+            background-color: var(--container-bg);
+        }
+
+        .diff-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .diff-content {
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .diff-added {
+            background-color: var(--diff-added);
+        }
+
+        .diff-removed {
+            background-color: var(--diff-removed);
+        }
+
+        .diff-changed {
+            background-color: var(--diff-changed);
+        }
+
+        .diff-item {
+            margin-bottom: 5px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .diff-path {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        @media (max-width: 768px) {
+            .theme-toggle {
+                position: static;
+                margin: 0 auto 20px;
+                display: block;
+            }
+            
+            .json-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span> 切换模式
+    </button>
+    
+    <h1>JSON 深度对比工具</h1>
+    
+    <div class="container">
+        <div class="json-container">
+            <div class="json-box">
+                <div class="json-box-header">
+                    <label for="json1">JSON 1:</label>
+                    <button onclick="formatJson('json1')">格式化</button>
+                </div>
+                <textarea id="json1" placeholder="粘贴第一个 JSON 内容"></textarea>
+                <div id="error1" class="error"></div>
+            </div>
+            
+            <div class="json-box">
+                <div class="json-box-header">
+                    <label for="json2">JSON 2:</label>
+                    <button onclick="formatJson('json2')">格式化</button>
+                </div>
+                <textarea id="json2" placeholder="粘贴第二个 JSON 内容"></textarea>
+                <div id="error2" class="error"></div>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button onclick="formatBoth()">格式化两边</button>
+            <button onclick="compareJson()" class="compare-btn">深度对比</button>
+            <button onclick="clearAll()" class="clear-btn">清空全部</button>
+        </div>
+        
+        <div class="diff-result" id="diffResult" style="display: none;">
+            <div class="diff-title">深度差异对比结果:</div>
+            <div class="diff-content" id="diffContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // 检查本地存储中的主题偏好
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('theme-icon').textContent = '☀️';
+        }
+
+        // 切换主题
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if (document.body.classList.contains('dark-mode')) {
+                themeIcon.textContent = '☀️';
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                themeIcon.textContent = '🌙';
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        }
+
+        // 格式化JSON
+        function formatJson(textareaId) {
+            const textarea = document.getElementById(textareaId);
+            const errorElement = document.getElementById(`error${textareaId.slice(-1)}`);
+            
+            try {
+                // 先处理反斜杠
+                let jsonStr = textarea.value.trim();
+                if (jsonStr) {
+                    // 移除多余的反斜杠（处理转义字符）
+                    jsonStr = jsonStr.replace(/\\"/g, '"');
+                    jsonStr = jsonStr.replace(/\\n/g, '\n');
+                    jsonStr = jsonStr.replace(/\\t/g, '\t');
+                    
+                    // 解析并重新格式化JSON
+                    const jsonObj = JSON.parse(jsonStr);
+                    const formattedJson = JSON.stringify(jsonObj, null, 2);
+                    textarea.value = formattedJson;
+                    errorElement.textContent = '';
+                }
+            } catch (e) {
+                errorElement.textContent = `格式错误: ${e.message}`;
+            }
+        }
+
+        // 格式化两边JSON
+        function formatBoth() {
+            formatJson('json1');
+            formatJson('json2');
+        }
+
+        // 清空所有内容
+        function clearAll() {
+            document.getElementById('json1').value = '';
+            document.getElementById('json2').value = '';
+            document.getElementById('error1').textContent = '';
+            document.getElementById('error2').textContent = '';
+            document.getElementById('diffResult').style.display = 'none';
+        }
+
+        // 深度比较两个JSON对象
+        function deepCompare(obj1, obj2, path = '', differences = []) {
+            // 类型不同直接返回差异
+            if (typeof obj1 !== typeof obj2) {
+                differences.push({
+                    path: path || 'root',
+                    type: 'type',
+                    value1: typeof obj1,
+                    value2: typeof obj2
+                });
+                return differences;
+            }
+
+            // 处理null和undefined
+            if (obj1 === null || obj2 === null || obj1 === undefined || obj2 === undefined) {
+                if (obj1 !== obj2) {
+                    differences.push({
+                        path: path || 'root',
+                        type: 'value',
+                        value1: obj1,
+                        value2: obj2
+                    });
+                }
+                return differences;
+            }
+
+            // 基本类型直接比较值
+            if (typeof obj1 !== 'object') {
+                if (obj1 !== obj2) {
+                    differences.push({
+                        path: path || 'root',
+                        type: 'value',
+                        value1: obj1,
+                        value2: obj2
+                    });
+                }
+                return differences;
+            }
+
+            // 数组比较
+            if (Array.isArray(obj1)) {
+                if (!Array.isArray(obj2)) {
+                    differences.push({
+                        path: path || 'root',
+                        type: 'type',
+                        value1: 'array',
+                        value2: typeof obj2
+                    });
+                    return differences;
+                }
+
+                // 比较数组长度
+                if (obj1.length !== obj2.length) {
+                    differences.push({
+                        path: path || 'root',
+                        type: 'array-length',
+                        value1: obj1.length,
+                        value2: obj2.length
+                    });
+                }
+
+                // 比较数组元素
+                const maxLength = Math.max(obj1.length, obj2.length);
+                for (let i = 0; i < maxLength; i++) {
+                    const newPath = path ? `${path}[${i}]` : `[${i}]`;
+                    if (i >= obj1.length) {
+                        differences.push({
+                            path: newPath,
+                            type: 'added',
+                            value2: obj2[i]
+                        });
+                    } else if (i >= obj2.length) {
+                        differences.push({
+                            path: newPath,
+                            type: 'removed',
+                            value1: obj1[i]
+                        });
+                    } else {
+                        deepCompare(obj1[i], obj2[i], newPath, differences);
+                    }
+                }
+                return differences;
+            }
+
+            // 对象比较
+            const keys1 = Object.keys(obj1);
+            const keys2 = Object.keys(obj2);
+            const allKeys = new Set([...keys1, ...keys2]);
+
+            // 检查缺失的键
+            for (const key of allKeys) {
+                const newPath = path ? `${path}.${key}` : key;
+                if (!keys1.includes(key)) {
+                    differences.push({
+                        path: newPath,
+                        type: 'added',
+                        value2: obj2[key]
+                    });
+                } else if (!keys2.includes(key)) {
+                    differences.push({
+                        path: newPath,
+                        type: 'removed',
+                        value1: obj1[key]
+                    });
+                } else {
+                    deepCompare(obj1[key], obj2[key], newPath, differences);
+                }
+            }
+
+            return differences;
+        }
+
+        // 对比JSON差异
+        function compareJson() {
+            const json1Text = document.getElementById('json1').value.trim();
+            const json2Text = document.getElementById('json2').value.trim();
+            const error1 = document.getElementById('error1');
+            const error2 = document.getElementById('error2');
+            const diffResult = document.getElementById('diffResult');
+            const diffContent = document.getElementById('diffContent');
+            
+            if (!json1Text || !json2Text) {
+                alert('请在两边的文本框中输入JSON内容');
+                return;
+            }
+            
+            try {
+                const json1 = json1Text ? JSON.parse(json1Text) : {};
+                const json2 = json2Text ? JSON.parse(json2Text) : {};
+                
+                error1.textContent = '';
+                error2.textContent = '';
+                
+                // 执行深度比较
+                const differences = deepCompare(json1, json2);
+                
+                // 显示差异结果
+                if (differences.length === 0) {
+                    diffContent.innerHTML = '<div>两个JSON内容完全相同</div>';
+                } else {
+                    let diffHtml = '';
+                    differences.forEach(diff => {
+                        let itemHtml = `<div class="diff-item `;
+                        
+                        switch (diff.type) {
+                            case 'added':
+                                itemHtml += `diff-added">`;
+                                itemHtml += `<span class="diff-path">${diff.path}</span>: 新增字段 `;
+                                itemHtml += `<span>${JSON.stringify(diff.value2, null, 2)}</span>`;
+                                break;
+                            case 'removed':
+                                itemHtml += `diff-removed">`;
+                                itemHtml += `<span class="diff-path">${diff.path}</span>: 删除字段 `;
+                                itemHtml += `<span>${JSON.stringify(diff.value1, null, 2)}</span>`;
+                                break;
+                            case 'value':
+                                itemHtml += `diff-changed">`;
+                                itemHtml += `<span class="diff-path">${diff.path}</span>: 值不同<br>`;
+                                itemHtml += `- 旧值: ${JSON.stringify(diff.value1, null, 2)}<br>`;
+                                itemHtml += `+ 新值: ${JSON.stringify(diff.value2, null, 2)}`;
+                                break;
+                            case 'type':
+                                itemHtml += `diff-changed">`;
+                                itemHtml += `<span class="diff-path">${diff.path}</span>: 类型不同<br>`;
+                                itemHtml += `- 类型: ${diff.value1}<br>`;
+                                itemHtml += `+ 类型: ${diff.value2}`;
+                                break;
+                            case 'array-length':
+                                itemHtml += `diff-changed">`;
+                                itemHtml += `<span class="diff-path">${diff.path}</span>: 数组长度不同<br>`;
+                                itemHtml += `- 长度: ${diff.value1}<br>`;
+                                itemHtml += `+ 长度: ${diff.value2}`;
+                                break;
+                        }
+                        
+                        itemHtml += `</div>`;
+                        diffHtml += itemHtml;
+                    });
+                    
+                    diffContent.innerHTML = diffHtml;
+                }
+                
+                diffResult.style.display = 'block';
+                
+            } catch (e) {
+                if (e.message.includes('json1')) {
+                    error1.textContent = `JSON1 解析错误: ${e.message}`;
+                } else {
+                    error2.textContent = `JSON2 解析错误: ${e.message}`;
+                }
+                diffResult.style.display = 'none';
+            }
+        }
+
+        // 自动处理粘贴的内容（移除反斜杠）
+        document.getElementById('json1').addEventListener('paste', function(e) {
+            setTimeout(() => {
+                this.value = this.value.replace(/\\"/g, '"')
+                                      .replace(/\\n/g, '\n')
+                                      .replace(/\\t/g, '\t');
+            }, 10);
+        });
+
+        document.getElementById('json2').addEventListener('paste', function(e) {
+            setTimeout(() => {
+                this.value = this.value.replace(/\\"/g, '"')
+                                      .replace(/\\n/g, '\n')
+                                      .replace(/\\t/g, '\t');
+            }, 10);
+        });
+
+        // 添加键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                compareJson();
+            }
+        });
+    </script>
+</body>
+</html>
