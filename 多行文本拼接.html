@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高级文本拼接工具</title>
+    <title>超级文本拼接工具</title>
     <style>
         /* 基础样式 */
         * {
@@ -39,6 +39,9 @@
             --warning-btn-bg: #f6bb42;
             --warning-btn-hover: #f0aa27;
             --warning-btn-text: #ffffff;
+            --info-btn-bg: #5d9cec;
+            --info-btn-hover: #4a89dc;
+            --info-btn-text: #ffffff;
         }
         
         /* 深色主题 */
@@ -62,6 +65,9 @@
             --warning-btn-bg: #e99e2d;
             --warning-btn-hover: #d88d21;
             --warning-btn-text: #ffffff;
+            --info-btn-bg: #4a89dc;
+            --info-btn-hover: #3b7dd8;
+            --info-btn-text: #ffffff;
         }
         
         body {
@@ -167,6 +173,16 @@
             font-size: 0.9em;
         }
         
+        .global-fixed-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--button-bg);
+            padding: 8px 12px;
+            border-radius: 4px;
+            width: 100%;
+        }
+        
         input, select {
             padding: 8px;
             background-color: var(--textarea-bg);
@@ -240,7 +256,7 @@
 </head>
 <body data-theme="light">
     <div class="app-container">
-        <h1>高级文本拼接工具</h1>
+        <h1>超级文本拼接工具</h1>
         
         <div class="controls">
             <div class="button-group">
@@ -270,6 +286,17 @@
                         <option value="after" selected>添加到后</option>
                     </select>
                 </div>
+                
+                <div class="global-fixed-group">
+                    <label for="globalFixedText">全局固定字符:</label>
+                    <input type="text" id="globalFixedText" placeholder="输入全局固定字符">
+                    <select id="globalApplySelect">
+                        <option value="none">不应用</option>
+                        <option value="first">应用到前文本</option>
+                        <option value="second">应用到后文本</option>
+                        <option value="both">应用到前后文本</option>
+                    </select>
+                </div>
             </div>
         </div>
         
@@ -297,13 +324,15 @@
             const positionSelectBefore = document.getElementById('positionSelectBefore');
             const fixedTextAfter = document.getElementById('fixedTextAfter');
             const positionSelectAfter = document.getElementById('positionSelectAfter');
+            const globalFixedText = document.getElementById('globalFixedText');
+            const globalApplySelect = document.getElementById('globalApplySelect');
             const body = document.body;
             const statusMessage = document.getElementById('statusMessage');
             
             let concatenationOrder = 'text1First'; // 'text1First' 或 'text2First'
             
             // 拼接文本函数
-            function concatenateTexts(text1, text2, fixedBefore = '', positionBefore = 'after', fixedAfter = '', positionAfter = 'after') {
+            function concatenateTexts(text1, text2, fixedBefore = '', positionBefore = 'after', fixedAfter = '', positionAfter = 'after', globalFixed = '', applyTo = 'none') {
                 const lines1 = text1.split('\n');
                 const lines2 = text2.split('\n');
                 const maxLines = Math.max(lines1.length, lines2.length);
@@ -313,6 +342,16 @@
                 for (let i = 0; i < maxLines; i++) {
                     let line1 = lines1[i] || '';
                     let line2 = lines2[i] || '';
+                    
+                    // 应用全局固定字符
+                    if (globalFixed) {
+                        if (applyTo === 'first' || applyTo === 'both') {
+                            line1 = globalFixed + line1 + globalFixed;
+                        }
+                        if (applyTo === 'second' || applyTo === 'both') {
+                            line2 = globalFixed + line2 + globalFixed;
+                        }
+                    }
                     
                     // 处理前文本固定内容
                     if (fixedBefore && positionBefore === 'after') {
@@ -343,13 +382,19 @@
                     const positionBefore = positionSelectBefore.value;
                     const fixedAfter = fixedTextAfter.value;
                     const positionAfter = positionSelectAfter.value;
+                    const globalFixed = globalFixedText.value;
+                    const applyTo = globalApplySelect.value;
                     
-                    const result = concatenateTexts(text1, text2, fixedBefore, positionBefore, fixedAfter, positionAfter);
+                    const result = concatenateTexts(text1, text2, fixedBefore, positionBefore, fixedAfter, positionAfter, globalFixed, applyTo);
                     resultArea.value = result;
                     
                     // 更新状态
                     const lineCount = result.split('\n').length;
-                    statusMessage.textContent = `拼接完成，共 ${lineCount} 行`;
+                    let applyMessage = "";
+                    if (globalFixed && applyTo !== 'none') {
+                        applyMessage = ` (已应用全局固定字符"${globalFixed}"到${applyTo === 'both' ? '前后文本' : applyTo === 'first' ? '前文本' : '后文本'})`;
+                    }
+                    statusMessage.textContent = `拼接完成，共 ${lineCount} 行${applyMessage}`;
                     statusMessage.style.color = "#4CAF50";
                     
                     // 自动滚动到结果
@@ -397,6 +442,8 @@
                 resultArea.value = '';
                 fixedTextBefore.value = '';
                 fixedTextAfter.value = '';
+                globalFixedText.value = '';
+                globalApplySelect.value = 'none';
                 statusMessage.textContent = "已清空所有内容";
                 statusMessage.style.color = "#2196F3";
                 
@@ -443,7 +490,9 @@
                 textArea2.value = "红色\n黄色\n橙色";
                 fixedTextBefore.value = " - ";
                 fixedTextAfter.value = " | ";
-                statusMessage.textContent = "已加载示例文本";
+                globalFixedText.value = "*";
+                globalApplySelect.value = "both";
+                statusMessage.textContent = "已加载示例文本 (全局固定字符*将应用到前后文本)";
                 statusMessage.style.color = "#2196F3";
             });
             
