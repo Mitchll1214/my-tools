@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级文本拼接工具</title>
+    <style>
+        /* 基础样式 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        html, body {
+            height: 100%;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        /* 浅色主题 */
+        [data-theme="light"] {
+            --bg-color: #f5f5f5;
+            --text-color: #333333;
+            --textarea-bg: #ffffff;
+            --border-color: #dddddd;
+            --button-bg: #e0e0e0;
+            --button-hover: #d0d0d0;
+            --control-bg: #f0f0f0;
+            --primary-btn-bg: #4a89dc;
+            --primary-btn-hover: #3b7dd8;
+            --primary-btn-text: #ffffff;
+            --secondary-btn-bg: #a0d468;
+            --secondary-btn-hover: #8cc152;
+            --secondary-btn-text: #ffffff;
+            --danger-btn-bg: #e9573f;
+            --danger-btn-hover: #d6422f;
+            --danger-btn-text: #ffffff;
+            --warning-btn-bg: #f6bb42;
+            --warning-btn-hover: #f0aa27;
+            --warning-btn-text: #ffffff;
+        }
+        
+        /* 深色主题 */
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #f5f5f5;
+            --textarea-bg: #2d2d2d;
+            --border-color: #444444;
+            --button-bg: #333333;
+            --button-hover: #444444;
+            --control-bg: #252525;
+            --primary-btn-bg: #3a6fc4;
+            --primary-btn-hover: #2d5db1;
+            --primary-btn-text: #ffffff;
+            --secondary-btn-bg: #7db03e;
+            --secondary-btn-hover: #6b9a34;
+            --secondary-btn-text: #ffffff;
+            --danger-btn-bg: #c1392b;
+            --danger-btn-hover: #a53126;
+            --danger-btn-text: #ffffff;
+            --warning-btn-bg: #e99e2d;
+            --warning-btn-hover: #d88d21;
+            --warning-btn-text: #ffffff;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+        
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: var(--control-bg);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: var(--control-bg);
+            border-radius: 6px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        #concatBtn {
+            background-color: var(--primary-btn-bg);
+            color: var(--primary-btn-text);
+        }
+        
+        #concatBtn:hover {
+            background-color: var(--primary-btn-hover);
+        }
+        
+        #copyBtn {
+            background-color: var(--secondary-btn-bg);
+            color: var(--secondary-btn-text);
+        }
+        
+        #copyBtn:hover {
+            background-color: var(--secondary-btn-hover);
+        }
+        
+        #clearBtn {
+            background-color: var(--danger-btn-bg);
+            color: var(--danger-btn-text);
+        }
+        
+        #clearBtn:hover {
+            background-color: var(--danger-btn-hover);
+        }
+        
+        #exampleBtn {
+            background-color: var(--warning-btn-bg);
+            color: var(--warning-btn-text);
+        }
+        
+        #exampleBtn:hover {
+            background-color: var(--warning-btn-hover);
+        }
+        
+        .fixed-text-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .fixed-text-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--button-bg);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .fixed-text-group label {
+            white-space: nowrap;
+            font-size: 0.9em;
+        }
+        
+        input, select {
+            padding: 8px;
+            background-color: var(--textarea-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            min-width: 120px;
+        }
+        
+        .text-areas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .text-areas {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 12px;
+            background-color: var(--textarea-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            resize: vertical;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: all 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-btn-bg);
+            box-shadow: 0 0 0 2px rgba(74, 137, 220, 0.2);
+        }
+        
+        #resultArea {
+            grid-column: span 2;
+            background-color: var(--textarea-bg);
+        }
+        
+        @media (max-width: 768px) {
+            #resultArea {
+                grid-column: span 1;
+            }
+        }
+        
+        .status {
+            margin-top: 15px;
+            text-align: center;
+            font-style: italic;
+            color: var(--text-color);
+            opacity: 0.8;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: var(--button-bg);
+            transition: all 0.3s;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="app-container">
+        <h1>高级文本拼接工具</h1>
+        
+        <div class="controls">
+            <div class="button-group">
+                <button id="concatBtn">拼接文本</button>
+                <button id="copyBtn">复制结果</button>
+                <button id="clearBtn">清空所有</button>
+                <button id="swapBtn">交换顺序</button>
+                <button id="themeToggle">切换主题</button>
+                <button id="exampleBtn">加载示例</button>
+            </div>
+            
+            <div class="fixed-text-controls">
+                <div class="fixed-text-group">
+                    <label for="fixedTextBefore">前文本固定:</label>
+                    <input type="text" id="fixedTextBefore" placeholder="前固定文本">
+                    <select id="positionSelectBefore">
+                        <option value="before">添加到前</option>
+                        <option value="after" selected>添加到后</option>
+                    </select>
+                </div>
+                
+                <div class="fixed-text-group">
+                    <label for="fixedTextAfter">后文本固定:</label>
+                    <input type="text" id="fixedTextAfter" placeholder="后固定文本">
+                    <select id="positionSelectAfter">
+                        <option value="before">添加到前</option>
+                        <option value="after" selected>添加到后</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-areas">
+            <textarea id="textArea1" placeholder="第一个文本区域"></textarea>
+            <textarea id="textArea2" placeholder="第二个文本区域"></textarea>
+            <textarea id="resultArea" placeholder="拼接结果将显示在这里" readonly></textarea>
+        </div>
+        
+        <div class="status" id="statusMessage">准备就绪</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const textArea1 = document.getElementById('textArea1');
+            const textArea2 = document.getElementById('textArea2');
+            const resultArea = document.getElementById('resultArea');
+            const concatBtn = document.getElementById('concatBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const swapBtn = document.getElementById('swapBtn');
+            const themeToggle = document.getElementById('themeToggle');
+            const exampleBtn = document.getElementById('exampleBtn');
+            const fixedTextBefore = document.getElementById('fixedTextBefore');
+            const positionSelectBefore = document.getElementById('positionSelectBefore');
+            const fixedTextAfter = document.getElementById('fixedTextAfter');
+            const positionSelectAfter = document.getElementById('positionSelectAfter');
+            const body = document.body;
+            const statusMessage = document.getElementById('statusMessage');
+            
+            let concatenationOrder = 'text1First'; // 'text1First' 或 'text2First'
+            
+            // 拼接文本函数
+            function concatenateTexts(text1, text2, fixedBefore = '', positionBefore = 'after', fixedAfter = '', positionAfter = 'after') {
+                const lines1 = text1.split('\n');
+                const lines2 = text2.split('\n');
+                const maxLines = Math.max(lines1.length, lines2.length);
+                
+                let result = [];
+                
+                for (let i = 0; i < maxLines; i++) {
+                    let line1 = lines1[i] || '';
+                    let line2 = lines2[i] || '';
+                    
+                    // 处理前文本固定内容
+                    if (fixedBefore && positionBefore === 'after') {
+                        line1 += fixedBefore;
+                    } else if (fixedBefore && positionBefore === 'before') {
+                        line1 = fixedBefore + line1;
+                    }
+                    
+                    // 处理后文本固定内容
+                    if (fixedAfter && positionAfter === 'after') {
+                        line2 += fixedAfter;
+                    } else if (fixedAfter && positionAfter === 'before') {
+                        line2 = fixedAfter + line2;
+                    }
+                    
+                    result.push(line1 + line2);
+                }
+                
+                return result.join('\n');
+            }
+            
+            // 拼接文本
+            concatBtn.addEventListener('click', () => {
+                try {
+                    const text1 = concatenationOrder === 'text1First' ? textArea1.value : textArea2.value;
+                    const text2 = concatenationOrder === 'text1First' ? textArea2.value : textArea1.value;
+                    const fixedBefore = fixedTextBefore.value;
+                    const positionBefore = positionSelectBefore.value;
+                    const fixedAfter = fixedTextAfter.value;
+                    const positionAfter = positionSelectAfter.value;
+                    
+                    const result = concatenateTexts(text1, text2, fixedBefore, positionBefore, fixedAfter, positionAfter);
+                    resultArea.value = result;
+                    
+                    // 更新状态
+                    const lineCount = result.split('\n').length;
+                    statusMessage.textContent = `拼接完成，共 ${lineCount} 行`;
+                    statusMessage.style.color = "#4CAF50";
+                    
+                    // 自动滚动到结果
+                    resultArea.scrollTop = 0;
+                } catch (error) {
+                    statusMessage.textContent = `错误: ${error.message}`;
+                    statusMessage.style.color = "#F44336";
+                }
+            });
+            
+            // 复制结果
+            copyBtn.addEventListener('click', () => {
+                if (!resultArea.value) {
+                    statusMessage.textContent = "没有可复制的内容";
+                    statusMessage.style.color = "#F44336";
+                    return;
+                }
+                
+                resultArea.select();
+                document.execCommand('copy');
+                
+                // 显示复制成功消息
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                
+                statusMessage.textContent = "已复制到剪贴板";
+                statusMessage.style.color = "#4CAF50";
+                
+                // 3秒后恢复原状态
+                setTimeout(() => {
+                    if (resultArea.value) {
+                        const lineCount = resultArea.value.split('\n').length;
+                        statusMessage.textContent = `拼接完成，共 ${lineCount} 行`;
+                    } else {
+                        statusMessage.textContent = "准备就绪";
+                    }
+                    statusMessage.style.color = "";
+                }, 2000);
+            });
+            
+            // 清空所有内容
+            clearBtn.addEventListener('click', () => {
+                textArea1.value = '';
+                textArea2.value = '';
+                resultArea.value = '';
+                fixedTextBefore.value = '';
+                fixedTextAfter.value = '';
+                statusMessage.textContent = "已清空所有内容";
+                statusMessage.style.color = "#2196F3";
+                
+                // 3秒后恢复状态
+                setTimeout(() => {
+                    statusMessage.textContent = "准备就绪";
+                    statusMessage.style.color = "";
+                }, 2000);
+            });
+            
+            // 交换拼接顺序
+            swapBtn.addEventListener('click', () => {
+                concatenationOrder = concatenationOrder === 'text1First' ? 'text2First' : 'text1First';
+                const temp = textArea1.value;
+                textArea1.value = textArea2.value;
+                textArea2.value = temp;
+                
+                // 交换固定文本的位置
+                const tempFixed = fixedTextBefore.value;
+                fixedTextBefore.value = fixedTextAfter.value;
+                fixedTextAfter.value = tempFixed;
+                
+                const tempPos = positionSelectBefore.value;
+                positionSelectBefore.value = positionSelectAfter.value;
+                positionSelectAfter.value = tempPos;
+                
+                statusMessage.textContent = `已交换文本顺序，当前拼接顺序: ${concatenationOrder === 'text1First' ? '文本1 + 文本2' : '文本2 + 文本1'}`;
+                statusMessage.style.color = "#2196F3";
+            });
+            
+            // 切换主题
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = body.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                body.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                statusMessage.textContent = `已切换至${newTheme === 'light' ? '浅色' : '深色'}主题`;
+                statusMessage.style.color = "#FF9800";
+            });
+            
+            // 加载示例文本
+            exampleBtn.addEventListener('click', () => {
+                textArea1.value = "苹果\n香蕉\n橙子";
+                textArea2.value = "红色\n黄色\n橙色";
+                fixedTextBefore.value = " - ";
+                fixedTextAfter.value = " | ";
+                statusMessage.textContent = "已加载示例文本";
+                statusMessage.style.color = "#2196F3";
+            });
+            
+            // 初始化主题
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            body.setAttribute('data-theme', savedTheme);
+            
+            // 初始化状态
+            statusMessage.style.transition = "color 0.3s";
+        });
+    </script>
+</body>
+</html>
