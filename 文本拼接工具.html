@@ -12,11 +12,13 @@
             --border-color: #dee2e6;
             --primary-color: #4CAF50;
             --secondary-color: #2196F3;
+            --tertiary-color: #ff9800;
             --input-bg: #ffffff;
             --input-text: #212529;
             --input-border: #ced4da;
             --button-hover: #45a049;
             --copy-button-hover: #0b7dda;
+            --reprocess-button-hover: #e68a00;
         }
 
         .dark-mode {
@@ -26,11 +28,13 @@
             --border-color: #495057;
             --primary-color: #4CAF50;
             --secondary-color: #2196F3;
+            --tertiary-color: #ff9800;
             --input-bg: #343a40;
             --input-text: #f8f9fa;
             --input-border: #495057;
             --button-hover: #3e8e41;
             --copy-button-hover: #0a6ebd;
+            --reprocess-button-hover: #e68a00;
         }
 
         body {
@@ -120,15 +124,34 @@
 
         .result-container {
             margin-top: 20px;
+            position: relative;
         }
 
         .copy-btn {
             background-color: var(--secondary-color);
-            margin-left: 10px;
         }
 
         .copy-btn:hover {
             background-color: var(--copy-button-hover);
+        }
+
+        .reprocess-btn {
+            background-color: var(--tertiary-color);
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            margin: 0;
+            border-radius: 0 0 4px 0;
+        }
+
+        .reprocess-btn:hover {
+            background-color: var(--reprocess-button-hover);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .theme-toggle {
@@ -162,6 +185,13 @@
                 flex-direction: column;
                 gap: 10px;
             }
+            
+            .reprocess-btn {
+                position: static;
+                width: 100%;
+                border-radius: 4px;
+                margin-top: 10px;
+            }
         }
     </style>
 </head>
@@ -194,7 +224,10 @@
         <div class="result-container">
             <label for="outputText">拼接结果：</label>
             <textarea id="outputText" readonly></textarea>
-            <button onclick="copyToClipboard()" class="copy-btn">复制结果</button>
+            <div class="button-group">
+                <button onclick="copyToClipboard()" class="copy-btn">复制结果</button>
+            </div>
+            <button onclick="reprocessText()" class="reprocess-btn">对结果再次拼接</button>
         </div>
     </div>
 
@@ -255,6 +288,21 @@
             setTimeout(() => {
                 copyBtn.textContent = originalText;
             }, 2000);
+        }
+        
+        // 新增功能：将结果转移到输入框
+        function reprocessText() {
+            const outputText = document.getElementById('outputText').value;
+            if (!outputText.trim()) {
+                alert('没有可再次拼接的内容');
+                return;
+            }
+            
+            document.getElementById('inputText').value = outputText;
+            document.getElementById('outputText').value = '';
+            
+            // 自动聚焦到前缀输入框，方便用户继续操作
+            document.getElementById('prefix').focus();
         }
         
         // 添加键盘快捷键支持
