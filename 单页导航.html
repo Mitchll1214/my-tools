@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的导航页</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --card-bg: #fff;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --primary-color: #4285f4;
+            --hover-color: #f1f1f1;
+        }
+
+        .dark-mode {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --card-bg: #2d2d2d;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --hover-color: #3d3d3d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+		.header {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			margin-bottom: 30px;
+			position: relative;
+		}
+
+		.header h1 {
+			font-size: 1.8rem;
+			color: var(--primary-color);
+			margin: 0;
+		}
+
+		.controls {
+			position: absolute;
+			right: 0;
+			display: flex;
+			align-items: center;
+			gap: 15px;
+		}
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            font-size: 16px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        #search-btn {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #search-btn:hover {
+            opacity: 0.9;
+        }
+
+        #search-engine {
+            padding: 10px;
+            border-radius: 5px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid #ddd;
+        }
+
+        .link-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .category-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .square-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all 0.2s ease;
+        }
+
+        .square-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            background-color: var(--hover-color);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        .card-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .card-desc {
+            font-size: 0.8rem;
+            color: #777;
+            text-align: center;
+        }
+
+        .dark-mode .card-desc {
+            color: #aaa;
+        }
+
+        #mode-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        #admin-btn {
+            padding: 8px 15px;
+            background-color: #666;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* 管理面板样式 */
+        .admin-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .admin-content {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .password-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .password-content {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .save-btn {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .close-admin {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* 天气小部件 */
+        .weather-widget {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--card-bg);
+            padding: 10px 15px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .weather-widget.scrolled {
+            top: 10px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+
+        #current-time {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        #weather-info {
+            display: flex;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .links-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>生活不易，牛马叹气</h1>
+            <div class="controls">
+                <button id="mode-toggle">🌓</button>
+                <button id="admin-btn">管理</button>
+            </div>
+        </div>
+
+        <div class="search-bar">
+            <select id="search-engine">
+                <option value="https://www.google.com/search?q=">Google</option>
+                <option value="https://www.bing.com/search?q=">Bing</option>
+                <option value="https://www.baidu.com/s?wd=">百度</option>
+                <option value="https://www.sogou.com/web?query=">搜狗</option>
+            </select>
+            <input type="text" id="search-input" placeholder="搜索...">
+            <button id="search-btn">搜索</button>
+        </div>
+
+        <div id="link-sections" class="link-sections">
+            <!-- 链接分类将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <!-- 天气小部件 -->
+    <div class="weather-widget">
+        <div id="current-time">00:00:00</div>
+        <div id="weather-info">
+            <span class="location">牛马牧场</span>
+            <span class="temp">888°C</span>
+            <span class="condition">炼狱</span>
+        </div>
+    </div>
+
+    <!-- 密码面板 -->
+    <div id="password-panel" class="password-panel">
+        <div class="password-content">
+            <h3>请输入管理员密码</h3>
+            <input type="password" id="admin-password" class="form-control">
+            <button id="confirm-password-btn" class="save-btn">确认</button>
+        </div>
+    </div>
+
+    <!-- 管理面板 -->
+    <div id="admin-panel" class="admin-panel">
+        <span id="close-admin" class="close-admin">×</span>
+        <div class="admin-content">
+            <h2>链接管理</h2>
+            <form id="admin-form">
+                <!-- 表单内容将通过JavaScript动态生成 -->
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 管理员密码
+        const ADMIN_PASSWORD = "admin";
+
+        // 默认链接数据
+        let linksData = [
+            {
+                category: "常用网站",
+                links: [
+                    { id: 1, name: "GitHub", url: "http://www.github.com/", description: "代码托管平台" },
+                    { id: 2, name: "Stack Overflow", url: "https://stackoverflow.com", description: "开发者问答社区" },
+                    { id: 3, name: "MDN Web Docs", url: "https://developer.mozilla.org", description: "Web开发文档" },
+                    { id: 4, name: "LeetCode", url: "https://leetcode.com", description: "算法练习平台" },
+                    { id: 5, name: "CodePen", url: "https://codepen.io", description: "前端代码实验" }
+                ]
+            },
+            {
+                category: "学习资源",
+                links: [
+                    { id: 6, name: "Coursera", url: "https://www.coursera.org", description: "在线课程平台" },
+                    { id: 7, name: "edX", url: "https://www.edx.org", description: "免费在线课程" },
+                    { id: 8, name: "Udemy", url: "https://www.udemy.com", description: "付费视频课程" },
+                    { id: 9, name: "Khan Academy", url: "https://www.khanacademy.org", description: "免费教育平台" },
+                    { id: 10, name: "MIT OpenCourseWare", url: "https://ocw.mit.edu", description: "MIT开放课程" }
+                ]
+            },
+            {
+                category: "工具",
+                links: [
+                    { id: 11, name: "Canva", url: "https://www.canva.com", description: "在线设计工具" },
+                    { id: 12, name: "Figma", url: "https://www.figma.com", description: "UI/UX设计工具" },
+                    { id: 13, name: "TinyPNG", url: "https://tinypng.com", description: "图片压缩工具" },
+                    { id: 14, name: "JSON Formatter", url: "https://jsonformatter.curiousconcept.com", description: "JSON格式化" },
+                    { id: 15, name: "Regex101", url: "https://regex101.com", description: "正则表达式测试" }
+                ]
+            }
+        ];
+
+         // Emoji表情集合
+        const EMOJIS = [
+            "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", 
+            "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", 
+            "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🥰", 
+            "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", 
+            "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", 
+            "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓",
+			"🤕"
+        ];
+
+        // 获取随机Emoji的函数
+        function getRandomEmoji() {
+            return EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+        }
+
+        // DOM元素
+
+        const linkSectionsEl = document.getElementById('link-sections');
+        const searchInputEl = document.getElementById('search-input');
+        const searchBtnEl = document.getElementById('search-btn');
+        const searchEngineEl = document.getElementById('search-engine');
+        const modeToggleEl = document.getElementById('mode-toggle');
+        const adminBtnEl = document.getElementById('admin-btn');
+        const adminPanelEl = document.getElementById('admin-panel');
+        const closeAdminEl = document.getElementById('close-admin');
+        const passwordPanelEl = document.getElementById('password-panel');
+        const adminPasswordEl = document.getElementById('admin-password');
+        const confirmPasswordBtnEl = document.getElementById('confirm-password-btn');
+        const adminFormEl = document.getElementById('admin-form');
+        const currentTimeEl = document.getElementById('current-time');
+        const weatherWidgetEl = document.querySelector('.weather-widget');
+
+        // 从本地存储加载数据
+        function loadData() {
+            const savedData = localStorage.getItem('linksData');
+            if (savedData) {
+                linksData = JSON.parse(savedData);
+            }
+        }
+
+        // 保存数据到本地存储
+        function saveData() {
+            localStorage.setItem('linksData', JSON.stringify(linksData));
+        }
+
+        // 渲染链接分类
+        function renderLinkSections() {
+            linkSectionsEl.innerHTML = '';
+            
+            linksData.forEach(category => {
+                const sectionHtml = `
+                    <h2 class="category-title">${category.category}</h2>
+                    <div class="links-grid">
+                        ${category.links.map(link => `
+                            <a href="${link.url}" target="_blank" class="square-card" title="${link.name} - ${link.description}">
+                                <div class="card-icon">
+                                    ${getRandomEmoji()}
+                                </div>
+                                <div class="card-name">${link.name}</div>
+                                <div class="card-desc">${link.description}</div>
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+                
+                linkSectionsEl.insertAdjacentHTML('beforeend', sectionHtml);
+            });
+        }
+
+        // 搜索功能
+        function handleSearch() {
+            const query = searchInputEl.value.trim();
+            if (!query) return;
+            
+            const searchUrl = searchEngineEl.value + encodeURIComponent(query);
+            window.open(searchUrl, '_blank');
+            searchInputEl.value = '';
+        }
+
+        // 切换暗黑模式
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode);
+        }
+
+        // 初始化暗黑模式
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        // 显示/隐藏管理面板
+        function toggleAdminPanel(show) {
+            if (show) {
+                passwordPanelEl.style.display = 'flex';
+            } else {
+                adminPanelEl.style.display = 'none';
+                passwordPanelEl.style.display = 'none';
+            }
+        }
+
+        // 渲染管理表单
+        function renderAdminForm() {
+            let formHtml = '';
+            
+            linksData.forEach((category, catIndex) => {
+                formHtml += `
+                    <div class="category-form">
+                        <h3>${category.category}</h3>
+                        <input type="text" class="form-control" value="${category.category}" 
+                            onchange="updateCategoryName(${catIndex}, this.value)">
+                        
+                        ${category.links.map((link, linkIndex) => `
+                            <div class="link-form">
+                                <input type="text" class="form-control" value="${link.name}" 
+                                    placeholder="名称" onchange="updateLink(${catIndex}, ${linkIndex}, 'name', this.value)">
+                                <input type="text" class="form-control" value="${link.url}" 
+                                    placeholder="URL" onchange="updateLink(${catIndex}, ${linkIndex}, 'url', this.value)">
+                                <input type="text" class="form-control" value="${link.description}" 
+                                    placeholder="描述" onchange="updateLink(${catIndex}, ${linkIndex}, 'description', this.value)">
+                                <button class="save-btn" onclick="removeLink(${catIndex}, ${linkIndex})">删除</button>
+                            </div>
+                        `).join('')}
+                        
+                        <button class="save-btn" onclick="addNewLink(${catIndex})">添加链接</button>
+                    </div>
+                `;
+            });
+            
+            formHtml += `
+                <div class="category-form">
+                    <h3>添加新分类</h3>
+                    <input type="text" id="new-category-name" class="form-control" placeholder="分类名称">
+                    <button class="save-btn" onclick="addNewCategory()">添加分类</button>
+                </div>
+            `;
+            
+            adminFormEl.innerHTML = formHtml;
+        }
+
+        // 更新分类名称
+        function updateCategoryName(catIndex, newName) {
+            linksData[catIndex].category = newName;
+            saveData();
+            renderLinkSections();
+        }
+
+        // 更新链接信息
+        function updateLink(catIndex, linkIndex, field, value) {
+            linksData[catIndex].links[linkIndex][field] = value;
+            saveData();
+            renderLinkSections();
+        }
+
+        // 删除链接
+        function removeLink(catIndex, linkIndex) {
+            linksData[catIndex].links.splice(linkIndex, 1);
+            saveData();
+            renderAdminForm();
+            renderLinkSections();
+        }
+
+        // 添加新链接
+        function addNewLink(catIndex) {
+            const newLink = {
+                id: Date.now(),
+                name: "新链接",
+                url: "https://",
+                description: "描述"
+            };
+            linksData[catIndex].links.push(newLink);
+            saveData();
+            renderAdminForm();
+            renderLinkSections();
+        }
+
+        // 添加新分类
+        function addNewCategory() {
+            const newCatName = document.getElementById('new-category-name').value.trim();
+            if (!newCatName) return;
+            
+            const newCategory = {
+                category: newCatName,
+                links: []
+            };
+            linksData.push(newCategory);
+            saveData();
+            renderAdminForm();
+            renderLinkSections();
+            document.getElementById('new-category-name').value = '';
+        }
+
+        // 更新时间和天气
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            currentTimeEl.textContent = timeStr;
+        }
+
+        // 滚动时调整天气小部件
+        function handleScroll() {
+            if (window.scrollY > 50) {
+                weatherWidgetEl.classList.add('scrolled');
+            } else {
+                weatherWidgetEl.classList.remove('scrolled');
+            }
+        }
+
+        // 初始化函数
+        function init() {
+            loadData();
+            initDarkMode();
+            renderLinkSections();
+            
+            // 事件监听
+            searchBtnEl.addEventListener('click', handleSearch);
+            searchInputEl.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
+            
+            modeToggleEl.addEventListener('click', toggleDarkMode);
+            
+            adminBtnEl.addEventListener('click', () => {
+                toggleAdminPanel(true);
+            });
+            
+            closeAdminEl.addEventListener('click', () => {
+                toggleAdminPanel(false);
+            });
+            
+            confirmPasswordBtnEl.addEventListener('click', () => {
+                if (adminPasswordEl.value === ADMIN_PASSWORD) {
+                    passwordPanelEl.style.display = 'none';
+                    adminPanelEl.style.display = 'flex';
+                    renderAdminForm();
+                } else {
+                    alert('密码错误');
+                }
+                adminPasswordEl.value = '';
+            });
+            
+            // 每秒钟更新时间
+            setInterval(updateTime, 1000);
+            updateTime();
+            
+            // 滚动事件
+            window.addEventListener('scroll', handleScroll);
+        }
+
+        // 全局函数
+        window.updateCategoryName = updateCategoryName;
+        window.updateLink = updateLink;
+        window.removeLink = removeLink;
+        window.addNewLink = addNewLink;
+        window.addNewCategory = addNewCategory;
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
