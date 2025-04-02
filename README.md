@@ -37,4 +37,7 @@ v4: 使用随机数生成 (最常用)
 # 工具9：多行文本拼接 
 支持多行文本拼接，支持固定拼接，增加全局字符添加，在前后文本框内容前后增加固定字符
 ![image](https://github.com/user-attachments/assets/48836fe0-8919-4efc-9e97-64413c3d525d)
+# 工具10：字符统计工具
+![image](https://github.com/user-attachments/assets/8d8d9a6c-a0f5-400d-bb78-6919c7a06eba)
+
 
